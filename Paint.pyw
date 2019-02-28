@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import colorchooser
 from tkinter import filedialog as fd
-from PIL import ImageGrab
+from PIL import Image, ImageDraw, ImageGrab  # ImageGrab for Windows
 
 canvas_width = 700
 canvas_height = 500
@@ -30,6 +30,8 @@ def activate_paint(e):
 
     color = lstBox.get(lstBox.curselection())
     size = scl.get()
+    if size == 0:
+        scl.set(1)
     txt()
 
     if var.get() == 0:
@@ -37,8 +39,11 @@ def activate_paint(e):
     elif var.get() == 2:
         w.bind('<B1-Motion>', paint_line)
     else:
-        w.bind('<B1-Motion>', paint_line, add="+")
-        w.bind('<B1-Motion>', paint_oval, add="+")
+        if size > 1:
+            w.bind('<B1-Motion>', paint_line, add="+")
+            w.bind('<B1-Motion>', paint_oval, add="+")
+        else:
+            w.bind('<B1-Motion>', paint_line)
 
 
 def txt():
@@ -70,6 +75,7 @@ def paint_line(e):
     global x1, y1
     x2, y2 = e.x, e.y
     w.create_line((x1, y1, x2, y2), width=size, fill=color)
+    draw.line((x1, y1, x2, y2), width=size, fill=color)
     x1, y1 = x2, y2
 
 
@@ -77,6 +83,7 @@ def paint_oval(e):
     x, y = e.x, e.y
     r = size // 2
     w.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='')
+    draw.ellipse((x-r, y-r, x+r, y+r), fill=color, outline=color)
 
 
 def size_change(new_size, pressBtn):
@@ -114,8 +121,14 @@ def color_all():
 
 
 def clear():
+    global imag, draw
+
     w.delete("all")
     text_rgb.delete(1.0, END)
+
+    imag.close()
+    imag = Image.new('RGBA', (canvas_width, canvas_height))
+    draw = ImageDraw.Draw(imag)
 
 
 def new_file():
@@ -148,18 +161,32 @@ def save_file():
         pass
 
 
+def save_file2():
+    try:
+        file_name = fd.asksaveasfilename(defaultextension='.png',
+                                         filetypes=(('PNG files', '*.png'),
+                                                    ('All files', '*.*')))
+        imag.save(file_name)
+    except (FileNotFoundError, ValueError):
+        pass
+
+
 filemenu = Menu(root)
 root.config(menu=filemenu)
 submenu = Menu(filemenu, tearoff=0)
 submenu.add_command(label="Новый", command=new_file)
 submenu.add_command(label="Открыть", command=open_file)
-submenu.add_command(label="Сохранить", command=save_file)
+submenu.add_command(label="Сохранить RGB", command=save_file)
+submenu.add_command(label="Сохранить RGBA", command=save_file2)
 filemenu.add_cascade(label="Файл", menu=submenu)
 
 w = Canvas(root, width=canvas_width, height=canvas_height,
            bg="white", cursor='spider')
 w.bind('<Button-1>', activate_paint)  # <1>
 w.grid(row=2, column=0, columnspan=6, padx=3, pady=3, sticky=E + W + S + N)
+
+imag = Image.new('RGBA', (canvas_width, canvas_height))
+draw = ImageDraw.Draw(imag)
 
 list_btnSize = []
 for i in range(len(lst)//2):
