@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import colorchooser
 from tkinter import filedialog as fd
-from PIL import Image, ImageDraw, ImageGrab  # ImageGrab for Windows
+from PIL import Image, ImageTk, ImageDraw, ImageGrab  # ImageGrab for Windows
 
 canvas_width = 700
 canvas_height = 500
@@ -120,6 +120,28 @@ def color_all():
     return color_change(new_col)
 
 
+def activate_fill(e):
+    global fill_activate
+    fill_activate = True
+    btn_fill.configure(relief=SUNKEN, state=DISABLED)
+    w.bind('<Button-1>', fill_, add='+')
+
+
+def fill_(e):
+    global tk_imag, fill_activate
+    xf, yf = e.x, e.y
+    if fill_activate is True:
+        # заливка изображение
+        rgba = int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+        ImageDraw.floodfill(imag, xy=(xf, yf), value=rgba)
+        # рисуем на холсте
+        tk_imag = ImageTk.PhotoImage(image=imag)
+        w.create_image(0, 0, anchor=NW, image=tk_imag)
+        # деактивация кнопки и заливки
+        btn_fill.configure(relief=RAISED, state=NORMAL)
+        fill_activate = False
+
+
 def clear():
     global imag, draw
 
@@ -136,11 +158,12 @@ def new_file():
 
 
 def open_file():
-    global fn
+    global imag, imag_tk
     try:
         file_name = fd.askopenfilename()
-        fn = PhotoImage(file=file_name)
-        w.create_image(w.winfo_width()/2, w.winfo_height()/2, image=fn)
+        imag = Image.open(file_name)
+        imag_tk = ImageTk.PhotoImage(image=imag)
+        w.create_image(0, 0, anchor=NW, image=imag_tk)
     except (FileNotFoundError, ValueError, TclError):
         pass
 
@@ -230,5 +253,13 @@ tx = ['oval', 'mix', 'line']
 for i in range(len(tx)):
     Radiobutton(root, text=tx[i], variable=var, fg='navy',
                 value=i).place(x=740+i*25, y=520 if i == 1 else 500)
+
+try:
+    img_btn_fill = PhotoImage(file='Уроки/fill.png')
+    btn_fill = Button(root, image=img_btn_fill)
+except TclError:
+    btn_fill = Button(root, text='fill', font='arial 14 bold', fg='grey')
+btn_fill.place(x=803, y=254)
+btn_fill.bind('<Button-1>', activate_fill)
 
 root.mainloop()
