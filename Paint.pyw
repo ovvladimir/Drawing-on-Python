@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import colorchooser
 from tkinter import filedialog as fd
-from PIL import Image, ImageTk, ImageDraw, ImageGrab  # ImageGrab for Windows
+from PIL import Image, ImageTk, ImageDraw, ImageGrab, ImageFont  # ImageGrab for Windows
 
 canvas_width = 700
 canvas_height = 500
@@ -9,6 +9,8 @@ canvas_height = 500
 size = 1
 color = '#000000'
 rgb = (0, 0, 0)
+fill_activate = False
+lastik = False
 
 lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Желтый', 'Белый',
        'Выбор цвета',
@@ -18,6 +20,17 @@ lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Ж
 root = Tk()
 root.title("Paint Python")
 root.geometry('+1+1')
+
+
+def activate():
+    global fill_activate, lastik
+    w.bind('<Button-1>', activate_paint)
+    w.bind('<Button-3>', mouse_right)
+    btn_brush.configure(relief=SUNKEN, state=DISABLED)
+    btn_fill.configure(relief=RAISED, state=NORMAL)
+    btn_clear.configure(relief=RAISED, state=NORMAL)
+    fill_activate = False
+    lastik = False
 
 
 def activate_paint(e):
@@ -47,7 +60,7 @@ def activate_paint(e):
 
 
 def txt():
-    global rgb, color
+    global rgb, color, rgba
     if color == 'black':
         color = '#000000'
         rgb = (0, 0, 0)
@@ -67,6 +80,11 @@ def txt():
         color = '#ffff00'
         rgb = (255, 255, 0)
 
+    if lastik is False:
+        rgba = int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+    else:
+        rgba = int(rgb[0]), int(rgb[1]), int(rgb[2]), 0
+
     text_rgb.delete(1.0, END)
     text_rgb.insert(1.0, f' {color} \n {int(rgb[0]), int(rgb[1]), int(rgb[2])}')
 
@@ -75,7 +93,7 @@ def paint_line(e):
     global x1, y1
     x2, y2 = e.x, e.y
     w.create_line((x1, y1, x2, y2), width=size, fill=color)
-    draw.line((x1, y1, x2, y2), width=size, fill=color)
+    draw.line((x1, y1, x2, y2), width=size, fill=rgba)
     x1, y1 = x2, y2
 
 
@@ -83,7 +101,7 @@ def paint_oval(e):
     x, y = e.x, e.y
     r = size // 2
     w.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='')
-    draw.ellipse((x-r, y-r, x+r, y+r), fill=color, outline=color)
+    draw.ellipse((x-r, y-r, x+r, y+r), fill=rgba, outline=rgba)
 
 
 def size_change(new_size, pressBtn):
@@ -121,25 +139,25 @@ def color_all():
 
 
 def activate_fill(e):
-    global fill_activate
+    global fill_activate, lastik
     fill_activate = True
+    lastik = False
     btn_fill.configure(relief=SUNKEN, state=DISABLED)
+    btn_brush.configure(relief=RAISED, state=NORMAL)
+    btn_clear.configure(relief=RAISED, state=NORMAL)
     w.bind('<Button-1>', fill_, add='+')
+    txt()
 
 
 def fill_(e):
-    global tk_imag, fill_activate
+    global tk_imag
     xf, yf = e.x, e.y
     if fill_activate is True:
         # заливка изображение
-        rgba = int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
         ImageDraw.floodfill(imag, xy=(xf, yf), value=rgba)
         # рисуем на холсте
         tk_imag = ImageTk.PhotoImage(image=imag)
         w.create_image(0, 0, anchor=NW, image=tk_imag)
-        # деактивация кнопки и заливки
-        btn_fill.configure(relief=RAISED, state=NORMAL)
-        fill_activate = False
 
 
 def clear():
@@ -155,6 +173,16 @@ def clear():
 
 def new_file():
     clear()
+
+
+def activate_lastik(new_col=lst[-6]):
+    global fill_activate, lastik
+    btn_clear.configure(relief=SUNKEN, state=DISABLED)
+    btn_fill.configure(relief=RAISED, state=NORMAL)
+    btn_brush.configure(relief=RAISED, state=NORMAL)
+    lastik = True
+    fill_activate = False
+    return color_change(new_col)
 
 
 def open_file():
@@ -194,18 +222,48 @@ def save_file2():
         pass
 
 
+def about():
+    top = Toplevel()
+    top.title('About')
+    top.minsize(width=200, height=100)
+    label_about = Label(top, text='Лучшее приложение для рисования', fg='red')
+    label_about.pack()
+
+
+def mouse_right(e):
+    global x, y
+    x = e.x
+    y = e.y
+    menu_right.post(e.x_root, e.y_root)
+
+
+def text():
+    global imag_tk
+    draw.text((0, 0), 'PAINT', fill=rgb,
+              font=ImageFont.truetype(r'C:\Windows\Fonts\Arial.ttf', 150))
+    imag_tk = ImageTk.PhotoImage(image=imag)
+    w.create_image(0, 0, anchor=NW, image=imag_tk)
+
+
 filemenu = Menu(root)
 root.config(menu=filemenu)
 submenu = Menu(filemenu, tearoff=0)
+helpmenu = Menu(filemenu, tearoff=0)
 submenu.add_command(label="Новый", command=new_file)
 submenu.add_command(label="Открыть", command=open_file)
 submenu.add_command(label="Сохранить RGB", command=save_file)
 submenu.add_command(label="Сохранить RGBA", command=save_file2)
+submenu.add_separator()
+submenu.add_command(label="Выход", command=root.destroy)
+helpmenu.add_command(label="О программе", command=about)
 filemenu.add_cascade(label="Файл", menu=submenu)
+filemenu.add_cascade(label="Справка", menu=helpmenu)
+
+menu_right = Menu(tearoff=0)
+menu_right.add_command(label='Text', command=text)
 
 w = Canvas(root, width=canvas_width, height=canvas_height,
-           bg="white", cursor='spider')
-w.bind('<Button-1>', activate_paint)  # <1>
+           bg='white', cursor='spider')
 w.grid(row=2, column=0, columnspan=6, padx=3, pady=3, sticky=E + W + S + N)
 
 imag = Image.new('RGBA', (canvas_width, canvas_height))
@@ -254,12 +312,20 @@ for i in range(len(tx)):
     Radiobutton(root, text=tx[i], variable=var, fg='navy',
                 value=i).place(x=740+i*25, y=520 if i == 1 else 500)
 
-try:
-    img_btn_fill = PhotoImage(file='Уроки/fill.png')
-    btn_fill = Button(root, image=img_btn_fill)
-except TclError:
-    btn_fill = Button(root, text='fill', font='arial 14 bold', fg='grey')
-btn_fill.place(x=803, y=254)
+img_btn_brush = PhotoImage(file='img/img0.png')
+btn_brush = Button(root, image=img_btn_brush, command=activate)
+btn_brush.configure(relief=SUNKEN, state=DISABLED)
+btn_brush.place(x=797, y=254)
+img_btn_fill = PhotoImage(file='img/img1.png')
+btn_fill = Button(root, image=img_btn_fill)
+btn_fill.place(x=797, y=304)
 btn_fill.bind('<Button-1>', activate_fill)
+img_btn_clear = PhotoImage(file='img/img2.png')
+btn_clear = Button(root, image=img_btn_clear, command=activate_lastik)
+btn_clear.place(x=797, y=354)
+img_btn_color = PhotoImage(file='img/img3.png')
+btn_color = Button(root, image=img_btn_color, command=color_all)
+btn_color.place(x=797, y=404)
 
+activate()
 root.mainloop()
