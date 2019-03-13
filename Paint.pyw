@@ -1,7 +1,8 @@
 from tkinter import *
 from tkinter import colorchooser
 from tkinter import filedialog as fd
-from PIL import Image, ImageTk, ImageDraw, ImageGrab, ImageFont  # ImageGrab for Windows
+# ImageGrab for Windows
+from PIL import Image, ImageTk, ImageDraw, ImageGrab, ImageFont
 
 canvas_width = 700
 canvas_height = 500
@@ -11,6 +12,8 @@ color = '#000000'
 rgb = (0, 0, 0)
 fill_activate = False
 lastik = False
+sel = False
+im = None
 
 lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Желтый', 'Белый',
        'Выбор цвета',
@@ -24,24 +27,27 @@ root.geometry('+1+1')
 
 def activate():
     global fill_activate, lastik
+    if sel is True:
+        w.tag_unbind(im, '<B1-Motion>')
+        clear()
     w.bind('<Button-1>', activate_paint)
     w.bind('<Button-3>', mouse_right)
     btn_brush.configure(relief=SUNKEN, state=DISABLED)
     btn_fill.configure(relief=RAISED, state=NORMAL)
     btn_clear.configure(relief=RAISED, state=NORMAL)
+    btn_select.configure(relief=RAISED, state=NORMAL)
     fill_activate = False
     lastik = False
 
 
 def activate_paint(e):
-    global x1, y1, size, color
+    global x1, y1, size
     x1, y1 = e.x, e.y
 
     if size != scl.get():
         for obj in list_btnSize:
             obj.configure(relief=RAISED, state=NORMAL)
 
-    color = lstBox.get(lstBox.curselection())
     size = scl.get()
     if size == 0:
         scl.set(1)
@@ -61,6 +67,7 @@ def activate_paint(e):
 
 def txt():
     global rgb, color, rgba
+    color = lstBox.get(lstBox.curselection())
     if color == 'black':
         color = '#000000'
         rgb = (0, 0, 0)
@@ -92,7 +99,7 @@ def txt():
 def paint_line(e):
     global x1, y1
     x2, y2 = e.x, e.y
-    w.create_line((x1, y1, x2, y2), width=size, fill=color)
+    w.create_line((x1, y1, x2, y2), width=size, fill=color, tag='im_id')
     draw.line((x1, y1, x2, y2), width=size, fill=rgba)
     x1, y1 = x2, y2
 
@@ -100,7 +107,7 @@ def paint_line(e):
 def paint_oval(e):
     x, y = e.x, e.y
     r = size // 2
-    w.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='')
+    w.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='', tag='im_id')
     draw.ellipse((x-r, y-r, x+r, y+r), fill=rgba, outline=rgba)
 
 
@@ -140,28 +147,50 @@ def color_all():
 
 def activate_fill(e):
     global fill_activate, lastik
+    if sel is True:
+        w.tag_unbind(im, '<B1-Motion>')
+        clear()
     fill_activate = True
     lastik = False
     btn_fill.configure(relief=SUNKEN, state=DISABLED)
     btn_brush.configure(relief=RAISED, state=NORMAL)
     btn_clear.configure(relief=RAISED, state=NORMAL)
+    btn_select.configure(relief=RAISED, state=NORMAL)
     w.bind('<Button-1>', fill_, add='+')
-    txt()
 
 
 def fill_(e):
-    global tk_imag
+    global image_tk, im
+    txt()
     xf, yf = e.x, e.y
     if fill_activate is True:
         # заливка изображение
         ImageDraw.floodfill(imag, xy=(xf, yf), value=rgba)
         # рисуем на холсте
-        tk_imag = ImageTk.PhotoImage(image=imag)
-        w.create_image(0, 0, anchor=NW, image=tk_imag)
+        image_tk = ImageTk.PhotoImage(image=imag)
+        im = w.create_image(0, 0, anchor=NW, image=image_tk)
+        '''im1 = w.create_image(w.coords(im), anchor=NW, image=image_tk)
+        # w.coords(im) координаты im
+        w.delete(im)
+        im = im1'''
+
+
+def activate_lastik(new_col=lst[-6]):
+    global fill_activate, lastik
+    btn_clear.configure(relief=SUNKEN, state=DISABLED)
+    btn_fill.configure(relief=RAISED, state=NORMAL)
+    btn_brush.configure(relief=RAISED, state=NORMAL)
+    btn_select.configure(relief=RAISED, state=NORMAL)
+    if sel is True:
+        w.tag_unbind(im, '<B1-Motion>')
+        clear()
+    lastik = True
+    fill_activate = False
+    return color_change(new_col)
 
 
 def clear():
-    global imag, draw
+    global imag, draw, im, sel
 
     w.delete("all")
     text_rgb.delete(1.0, END)
@@ -170,29 +199,27 @@ def clear():
     imag = Image.new('RGBA', (canvas_width, canvas_height))
     draw = ImageDraw.Draw(imag)
 
+    im = None
+    sel = False
+
 
 def new_file():
     clear()
 
 
-def activate_lastik(new_col=lst[-6]):
-    global fill_activate, lastik
-    btn_clear.configure(relief=SUNKEN, state=DISABLED)
-    btn_fill.configure(relief=RAISED, state=NORMAL)
-    btn_brush.configure(relief=RAISED, state=NORMAL)
-    lastik = True
-    fill_activate = False
-    return color_change(new_col)
-
-
 def open_file():
-    global imag, imag_tk
+    global imag, image_tk, im
     try:
         file_name = fd.askopenfilename()
-        imag = Image.open(file_name)
-        imag_tk = ImageTk.PhotoImage(image=imag)
-        w.create_image(0, 0, anchor=NW, image=imag_tk)
-    except (FileNotFoundError, ValueError, TclError):
+        image2 = Image.open(file_name)
+        image2_w, image2_h = image2.size
+        imag_w, imag_h = imag.size
+        set_size = ((imag_w - image2_w) // 2, (imag_h - image2_h) // 2)
+        imag.alpha_composite(image2, set_size)
+        # imag.paste(image2, set_size)
+        image_tk = ImageTk.PhotoImage(image=imag)
+        im = w.create_image(0, 0, anchor=NW, image=image_tk)
+    except (FileNotFoundError, ValueError, AttributeError, TclError):
         pass
 
 
@@ -232,17 +259,39 @@ def about():
 
 def mouse_right(e):
     global x, y
-    x = e.x
-    y = e.y
+    x, y = e.x, e.y
     menu_right.post(e.x_root, e.y_root)
 
 
 def text():
-    global imag_tk
+    global image_txt, im
     draw.text((0, 0), 'PAINT', fill=rgb,
               font=ImageFont.truetype(r'C:\Windows\Fonts\Arial.ttf', 150))
-    imag_tk = ImageTk.PhotoImage(image=imag)
-    w.create_image(0, 0, anchor=NW, image=imag_tk)
+    image_txt = ImageTk.PhotoImage(image=imag)
+    w.delete(im)
+    im = w.create_image(0, 0, anchor=NW, image=image_txt)
+
+
+def select():
+    global fill_activate, lastik, sel, im
+    if im is not None:
+        sel = True
+        lastik = False
+        fill_activate = False
+        btn_select.configure(relief=SUNKEN, state=DISABLED)
+        btn_clear.configure(relief=RAISED, state=NORMAL)
+        btn_fill.configure(relief=RAISED, state=NORMAL)
+        btn_brush.configure(relief=RAISED, state=NORMAL)
+        w.delete('im_id')
+        w.unbind('<Button-1>')
+        w.unbind('<B1-Motion>')
+        w.tag_bind(im, "<B1-Motion>", change_img)
+
+
+def change_img(e):
+    imag_w, imag_h = imag.size
+    # im или CURRENT - текущий элемент под мышью
+    w.coords(im, (e.x-imag_w/2, e.y-imag_h/2))
 
 
 filemenu = Menu(root)
@@ -326,6 +375,9 @@ btn_clear.place(x=797, y=354)
 img_btn_color = PhotoImage(file='img/img3.png')
 btn_color = Button(root, image=img_btn_color, command=color_all)
 btn_color.place(x=797, y=404)
+btn_select = Button(root, text='↖', font='calibri 11 bold', width=5, bd=4,
+                    command=select)
+btn_select.place(x=797, y=457)
 
 activate()
 root.mainloop()
