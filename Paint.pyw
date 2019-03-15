@@ -19,6 +19,7 @@ lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Ж
        'Выбор цвета',
        color,
        'white', 'yellow', 'blue', 'green', 'red', 'black']
+tx = ['oval', 'mix', 'line']
 
 root = Tk()
 root.title("Paint Python")
@@ -309,10 +310,13 @@ filemenu.add_cascade(label="Файл", menu=submenu)
 filemenu.add_cascade(label="Справка", menu=helpmenu)
 
 menu_right = Menu(tearoff=0)
-menu_right.add_command(label='Text', command=text)
+menu_right.add_command(label='TEXT', command=text)
+for n in range(len(tx)):
+    def paint_(f=n): var.set(f)
+    menu_right.add_command(label=tx[n], command=paint_)
 
 w = Canvas(root, width=canvas_width, height=canvas_height,
-           bg='white', cursor='spider')
+           bg='white', cursor='spider', relief=SUNKEN)
 w.grid(row=2, column=0, columnspan=6, padx=3, pady=3, sticky=E + W + S + N)
 
 imag = Image.new('RGBA', (canvas_width, canvas_height))
@@ -356,10 +360,9 @@ scl.place(x=730, y=252)
 
 var = IntVar()
 var.set(1)
-tx = ['oval', 'mix', 'line']
-for i in range(len(tx)):
-    Radiobutton(root, text=tx[i], variable=var, fg='navy',
-                value=i).place(x=740+i*25, y=520 if i == 1 else 500)
+for j in range(len(tx)):
+    Radiobutton(root, text=tx[j], variable=var, fg='navy',
+                value=j).place(x=740+j*25, y=520 if j == 1 else 500)
 
 img_btn_brush = PhotoImage(file='img/img0.png')
 btn_brush = Button(root, image=img_btn_brush, command=activate)
