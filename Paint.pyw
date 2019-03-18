@@ -22,7 +22,8 @@ lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Ж
 tx = ['oval', 'mix', 'line']
 
 root = Tk()
-root.title("Paint Python")
+root.iconbitmap('img/ico.ico')
+root.title('Paint Python')
 root.geometry('+1+1')
 
 
@@ -209,15 +210,20 @@ def new_file():
 
 
 def open_file():
-    global imag, image_tk, im
+    global image_tk, im
     try:
         file_name = fd.askopenfilename()
         image2 = Image.open(file_name)
         image2_w, image2_h = image2.size
         imag_w, imag_h = imag.size
         set_size = ((imag_w - image2_w) // 2, (imag_h - image2_h) // 2)
-        imag.alpha_composite(image2, set_size)
-        # imag.paste(image2, set_size)
+        print(image2.mode)
+        if image2.mode == 'RGBA':
+            imag.alpha_composite(image2, set_size)
+        elif image2.mode == 'RGB':
+            # a_channel = Image.new('L', image2.size, 255)
+            # image2.putalpha(a_channel)  # добавление альфа-канала к image2
+            imag.paste(image2, set_size)
         image_tk = ImageTk.PhotoImage(image=imag)
         im = w.create_image(0, 0, anchor=NW, image=image_tk)
     except (FileNotFoundError, ValueError, AttributeError, TclError):
