@@ -14,6 +14,7 @@ fill_activate = False
 lastik = False
 sel = False
 im = None
+font1 = ImageFont.truetype(r'C:\Windows\Fonts\Arial.ttf', 150)
 
 lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Желтый', 'Белый',
        'Выбор цвета',
@@ -22,9 +23,9 @@ lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Ж
 tx = ['oval', 'mix', 'line']
 
 root = Tk()
+root.geometry('+1+1')
 root.iconbitmap('img/ico.ico')
 root.title('Paint Python')
-root.geometry('+1+1')
 
 
 def activate():
@@ -147,7 +148,7 @@ def color_all():
     return color_change(new_col)
 
 
-def activate_fill(e):
+def activate_fill():
     global fill_activate, lastik
     if sel is True:
         w.tag_unbind(im, '<B1-Motion>')
@@ -171,6 +172,7 @@ def fill_(e):
         # рисуем на холсте
         image_tk = ImageTk.PhotoImage(image=imag)
         im = w.create_image(0, 0, anchor=NW, image=image_tk)
+        w.delete('txt_id')
         '''im1 = w.create_image(w.coords(im), anchor=NW, image=image_tk)
         # w.coords(im) координаты im
         w.delete(im)
@@ -198,7 +200,7 @@ def clear():
     text_rgb.delete(1.0, END)
 
     imag.close()
-    imag = Image.new('RGBA', (canvas_width, canvas_height))
+    imag = Image.new('RGBA', (canvas_width+20, canvas_height))
     draw = ImageDraw.Draw(imag)
 
     im = None
@@ -259,24 +261,40 @@ def save_file2():
 def about():
     top = Toplevel()
     top.title('About')
-    top.minsize(width=200, height=100)
-    label_about = Label(top, text='Лучшее приложение для рисования', fg='red')
+    top.minsize(width=230, height=100)
+    label_about = Label(top, text='Это самое лучшее \nприложение для рисования',
+                        fg='red')
     label_about.pack()
 
 
 def mouse_right(e):
-    global x, y
-    x, y = e.x, e.y
     menu_right.post(e.x_root, e.y_root)
 
 
-def text():
+def entry_text():
+    global entry, top2
+    top2 = Toplevel()
+    top2.minsize(width=150, height=100)
+    entry = Entry(top2)
+    entry.focus()
+    entry.pack(pady=10)
+    Button(top2, text='Напечатать?', bd=15, command=image_text).pack()
+
+
+def image_text():
     global image_txt, im
-    draw.text((0, 0), 'PAINT', fill=rgb,
-              font=ImageFont.truetype(r'C:\Windows\Fonts\Arial.ttf', 150))
-    image_txt = ImageTk.PhotoImage(image=imag)
+    w.delete('im_id')
+    w.delete('txt_id')
     w.delete(im)
-    im = w.create_image(0, 0, anchor=NW, image=image_txt)
+    entry_txt = entry.get()
+    top2.destroy()
+
+    txt()
+    w_txt, h_txt = draw.textsize(entry_txt, font=font1)
+    draw.text(((canvas_width-w_txt)/2, (canvas_height-h_txt)/2),
+              entry_txt, fill=rgba, font=font1)
+    image_txt = ImageTk.PhotoImage(image=imag)
+    im = w.create_image(0, 0, anchor=NW, image=image_txt, tag='txt_id')
 
 
 def select():
@@ -316,16 +334,17 @@ filemenu.add_cascade(label="Файл", menu=submenu)
 filemenu.add_cascade(label="Справка", menu=helpmenu)
 
 menu_right = Menu(tearoff=0)
-menu_right.add_command(label='TEXT', command=text)
+menu_right.add_command(label='TEXT', command=entry_text)
 for n in range(len(tx)):
     def paint_(f=n): var.set(f)
+    menu_right.add_separator() if n == 0 else None
     menu_right.add_command(label=tx[n], command=paint_)
 
 w = Canvas(root, width=canvas_width, height=canvas_height,
            bg='white', cursor='spider', relief=SUNKEN)
 w.grid(row=2, column=0, columnspan=6, padx=3, pady=3, sticky=E + W + S + N)
 
-imag = Image.new('RGBA', (canvas_width, canvas_height))
+imag = Image.new('RGBA', (canvas_width+20, canvas_height))
 draw = ImageDraw.Draw(imag)
 
 list_btnSize = []
@@ -375,9 +394,8 @@ btn_brush = Button(root, image=img_btn_brush, command=activate)
 btn_brush.configure(relief=SUNKEN, state=DISABLED)
 btn_brush.place(x=797, y=254)
 img_btn_fill = PhotoImage(file='img/img1.png')
-btn_fill = Button(root, image=img_btn_fill)
+btn_fill = Button(root, image=img_btn_fill, command=activate_fill)
 btn_fill.place(x=797, y=304)
-btn_fill.bind('<Button-1>', activate_fill)
 img_btn_clear = PhotoImage(file='img/img2.png')
 btn_clear = Button(root, image=img_btn_clear, command=activate_lastik)
 btn_clear.place(x=797, y=354)
