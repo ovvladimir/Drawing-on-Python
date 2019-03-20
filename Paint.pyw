@@ -3,6 +3,7 @@ from tkinter import colorchooser
 from tkinter import filedialog as fd
 # ImageGrab for Windows
 from PIL import Image, ImageTk, ImageDraw, ImageGrab, ImageFont
+import math
 
 canvas_width = 700
 canvas_height = 500
@@ -14,13 +15,14 @@ fill_activate = False
 lastik = False
 sel = False
 im = None
+figure = None
 font1 = ImageFont.truetype(r'C:\Windows\Fonts\Arial.ttf', 150)
 
 lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Желтый', 'Белый',
        'Выбор цвета',
        color,
        'white', 'yellow', 'blue', 'green', 'red', 'black']
-tx = ['oval', 'mix', 'line']
+tx = ['oval', 'mix', 'line', 'Квадрат', 'Эллипс', 'Треугольник']
 
 root = Tk()
 root.geometry('+1+1')
@@ -31,7 +33,7 @@ root.title('Paint Python')
 def activate():
     global fill_activate, lastik
     if sel is True:
-        w.tag_unbind(im, '<B1-Motion>')
+        w.tag_unbind(CURRENT, '<B1-Motion>')
         clear()
     w.bind('<Button-1>', activate_paint)
     w.bind('<Button-3>', mouse_right)
@@ -44,7 +46,7 @@ def activate():
 
 
 def activate_paint(e):
-    global x1, y1, size
+    global x1, y1, size, figure
     x1, y1 = e.x, e.y
 
     if size != scl.get():
@@ -56,16 +58,20 @@ def activate_paint(e):
         scl.set(1)
     txt()
 
-    if var.get() == 0:
+    if var.get() == 3:
         w.bind('<B1-Motion>', paint_oval)
-    elif var.get() == 2:
-        w.bind('<B1-Motion>', paint_line)
     else:
-        if size > 1:
-            w.bind('<B1-Motion>', paint_line, add="+")
-            w.bind('<B1-Motion>', paint_oval, add="+")
-        else:
+        figure = None
+        if var.get() == 0:
+            w.bind('<B1-Motion>', paint_oval)
+        elif var.get() == 2:
             w.bind('<B1-Motion>', paint_line)
+        elif var.get() == 1:
+            if size > 1:
+                w.bind('<B1-Motion>', paint_line, add="+")
+                w.bind('<B1-Motion>', paint_oval, add="+")
+            else:
+                w.bind('<B1-Motion>', paint_line)
 
 
 def txt():
@@ -108,10 +114,43 @@ def paint_line(e):
 
 
 def paint_oval(e):
+    global w_figure, h_figure, h_polygon
     x, y = e.x, e.y
     r = size // 2
-    w.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='', tag='im_id')
-    draw.ellipse((x-r, y-r, x+r, y+r), fill=rgba, outline=rgba)
+    size_figure = x - x1
+
+    if figure == 3:
+        clear()
+        w.create_rectangle((x1, y1, x, y), fill=color, outline='', tag='im_id')
+        draw.rectangle((x1, y1, x, y), fill=rgba, outline=rgba)
+    elif figure == 4:
+        clear()
+        if x >= x1 and y >= y1:  # условие для draw.ellipse
+            w.create_oval((x1, y1, x, y), fill=color, outline='', tag='im_id')
+            draw.ellipse((x1, y1, x, y), fill=rgba, outline=rgba)
+        elif x1 >= x and y1 >= y:
+            w.create_oval((x, y, x1, y1), fill=color, outline='', tag='im_id')
+            draw.ellipse((x, y, x1, y1), fill=rgba, outline=rgba)
+        elif x >= x1 and y1 >= y:
+            w.create_oval((x1, y, x, y1), fill=color, outline='', tag='im_id')
+            draw.ellipse((x1, y, x, y1), fill=rgba, outline=rgba)
+        elif x1 >= x and y >= y1:
+            w.create_oval((x, y1, x1, y), fill=color, outline='', tag='im_id')
+            draw.ellipse((x, y1, x1, y), fill=rgba, outline=rgba)
+    elif figure == 5:
+        clear()
+        y = y1
+        x3 = x1+size_figure*math.cos(45)
+        y3 = y1+size_figure*math.sin(45)
+        w.create_polygon((x1, y1, x3, y3, x, y), fill=color, outline='', tag='im_id')
+        draw.polygon((x1, y1, x3, y3, x, y), fill=rgba, outline=rgba)
+    else:
+        w.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='', tag='im_id')
+        draw.ellipse((x-r, y-r, x+r, y+r), fill=rgba, outline=rgba)
+
+    w_figure = (x - x1)/2
+    h_figure = (y - y1)/2
+    h_polygon = (size_figure*math.sqrt(3)/2)/2
 
 
 def size_change(new_size, pressBtn):
@@ -149,12 +188,14 @@ def color_all():
 
 
 def activate_fill():
-    global fill_activate, lastik
+    global fill_activate, lastik, figure
+    w.unbind('<B1-Motion>')
     if sel is True:
-        w.tag_unbind(im, '<B1-Motion>')
+        w.tag_unbind(CURRENT, '<B1-Motion>')
         clear()
     fill_activate = True
     lastik = False
+    figure = None
     btn_fill.configure(relief=SUNKEN, state=DISABLED)
     btn_brush.configure(relief=RAISED, state=NORMAL)
     btn_clear.configure(relief=RAISED, state=NORMAL)
@@ -167,9 +208,7 @@ def fill_(e):
     txt()
     xf, yf = e.x, e.y
     if fill_activate is True:
-        # заливка изображение
         ImageDraw.floodfill(imag, xy=(xf, yf), value=rgba)
-        # рисуем на холсте
         image_tk = ImageTk.PhotoImage(image=imag)
         im = w.create_image(0, 0, anchor=NW, image=image_tk)
         w.delete('txt_id')
@@ -180,7 +219,7 @@ def fill_(e):
 
 
 def activate_lastik(new_col=lst[-6]):
-    global fill_activate, lastik
+    global fill_activate, lastik, figure
     btn_clear.configure(relief=SUNKEN, state=DISABLED)
     btn_fill.configure(relief=RAISED, state=NORMAL)
     btn_brush.configure(relief=RAISED, state=NORMAL)
@@ -190,6 +229,7 @@ def activate_lastik(new_col=lst[-6]):
         clear()
     lastik = True
     fill_activate = False
+    figure = None
     return color_change(new_col)
 
 
@@ -275,9 +315,11 @@ def entry_text():
     global entry, top2
     top2 = Toplevel()
     top2.minsize(width=150, height=100)
+    lb_txt = Label(top2, text='Введите текст')
+    lb_txt.pack()
     entry = Entry(top2)
     entry.focus()
-    entry.pack(pady=10)
+    entry.pack(pady=5)
     Button(top2, text='Напечатать?', bd=15, command=image_text).pack()
 
 
@@ -299,7 +341,7 @@ def image_text():
 
 def select():
     global fill_activate, lastik, sel, im
-    if im is not None:
+    if im is not None or figure is not None:
         sel = True
         lastik = False
         fill_activate = False
@@ -307,16 +349,24 @@ def select():
         btn_clear.configure(relief=RAISED, state=NORMAL)
         btn_fill.configure(relief=RAISED, state=NORMAL)
         btn_brush.configure(relief=RAISED, state=NORMAL)
-        w.delete('im_id')
         w.unbind('<Button-1>')
         w.unbind('<B1-Motion>')
-        w.tag_bind(im, "<B1-Motion>", change_img)
+        w.tag_bind(CURRENT, "<B1-Motion>", change_img)
+        if im is not None:
+            w.delete('im_id')
 
 
 def change_img(e):
+    # CURRENT - текущий элемент под мышью
     imag_w, imag_h = imag.size
-    # im или CURRENT - текущий элемент под мышью
-    w.coords(im, (e.x-imag_w/2, e.y-imag_h/2))
+    if figure == 3 or figure == 4:
+        w.coords(CURRENT, (e.x-w_figure, e.y-h_figure, e.x+w_figure, e.y+h_figure))
+    elif figure == 5:
+        w.coords(CURRENT, (e.x-w_figure, e.y-h_polygon,
+                           e.x, e.y+h_polygon,
+                           e.x+w_figure, e.y-h_polygon))
+    else:
+        w.coords(im, (e.x-imag_w/2, e.y-imag_h/2))
 
 
 filemenu = Menu(root)
@@ -336,9 +386,17 @@ filemenu.add_cascade(label="Справка", menu=helpmenu)
 menu_right = Menu(tearoff=0)
 menu_right.add_command(label='TEXT', command=entry_text)
 for n in range(len(tx)):
-    def paint_(f=n): var.set(f)
-    menu_right.add_separator() if n == 0 else None
-    menu_right.add_command(label=tx[n], command=paint_)
+    def figures(f=n):
+        global figure
+        if f < len(tx)/2:
+            var.set(f)
+            figure = None
+        else:
+            var.set(3)
+            figure = f
+            activate()
+    menu_right.add_separator() if n == 0 or n == 3 else None
+    menu_right.add_command(label=tx[n], command=figures)
 
 w = Canvas(root, width=canvas_width, height=canvas_height,
            bg='white', cursor='spider', relief=SUNKEN)
@@ -385,7 +443,7 @@ scl.place(x=730, y=252)
 
 var = IntVar()
 var.set(1)
-for j in range(len(tx)):
+for j in range(len(tx)//2):
     Radiobutton(root, text=tx[j], variable=var, fg='navy',
                 value=j).place(x=740+j*25, y=520 if j == 1 else 500)
 
