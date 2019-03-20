@@ -26,7 +26,7 @@ tx = ['oval', 'mix', 'line', 'Квадрат', 'Эллипс', 'Треуголь
 
 root = Tk()
 root.geometry('+1+1')
-root.iconbitmap('img/ico.ico')
+root.iconphoto(True, PhotoImage(file='img/ico.png'))
 root.title('Paint Python')
 
 
@@ -460,9 +460,9 @@ btn_clear.place(x=797, y=354)
 img_btn_color = PhotoImage(file='img/img3.png')
 btn_color = Button(root, image=img_btn_color, command=color_all)
 btn_color.place(x=797, y=404)
-btn_select = Button(root, text='↖', font='calibri 11 bold', width=5, bd=4,
+btn_select = Button(root, text='↖', font='calibri 10 bold', width=6, bd=4,
                     command=select)
-btn_select.place(x=797, y=457)
+btn_select.place(x=797, y=458)
 
 activate()
 root.mainloop()
