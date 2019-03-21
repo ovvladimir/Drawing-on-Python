@@ -22,7 +22,7 @@ lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Ж
        'Выбор цвета',
        color,
        'white', 'yellow', 'blue', 'green', 'red', 'black']
-tx = ['oval', 'mix', 'line', 'Квадрат', 'Эллипс', 'Треугольник']
+tx = ['TEXT', 'oval', 'mix', 'line', 'Квадрат', 'Эллипс', 'Треугольник', 'Линия']
 
 root = Tk()
 root.geometry('+1+1')
@@ -35,6 +35,7 @@ def activate():
     if sel is True:
         w.tag_unbind(CURRENT, '<B1-Motion>')
         clear()
+    w.unbind('<B1-Motion>')
     w.bind('<Button-1>', activate_paint)
     w.bind('<Button-3>', mouse_right)
     btn_brush.configure(relief=SUNKEN, state=DISABLED)
@@ -46,27 +47,24 @@ def activate():
 
 
 def activate_paint(e):
-    global x1, y1, size, figure
+    global x1, y1, figure
     x1, y1 = e.x, e.y
 
-    if size != scl.get():
-        for obj in list_btnSize:
-            obj.configure(relief=RAISED, state=NORMAL)
+    settings()
 
-    size = scl.get()
-    if size == 0:
-        scl.set(1)
-    txt()
-
-    if var.get() == 3:
+    if 3 < var.get() < 7:
         w.bind('<B1-Motion>', paint_oval)
+    elif var.get() == 7:
+        figure = None
+        w.unbind('<B1-Motion>')
+        w.bind('<Button-1>', paint_line)
     else:
         figure = None
-        if var.get() == 0:
+        if var.get() == 1:
             w.bind('<B1-Motion>', paint_oval)
-        elif var.get() == 2:
+        elif var.get() == 3:
             w.bind('<B1-Motion>', paint_line)
-        elif var.get() == 1:
+        elif var.get() == 2:
             if size > 1:
                 w.bind('<B1-Motion>', paint_line, add="+")
                 w.bind('<B1-Motion>', paint_oval, add="+")
@@ -74,8 +72,16 @@ def activate_paint(e):
                 w.bind('<B1-Motion>', paint_line)
 
 
-def txt():
-    global rgb, color, rgba
+def settings():
+    global size, color, rgb, rgba
+
+    if size != scl.get():
+        for obj in list_btnSize:
+            obj.configure(relief=RAISED, state=NORMAL)
+    size = scl.get()
+    if size == 0:
+        scl.set(1)
+
     color = lstBox.get(lstBox.curselection())
     if color == 'black':
         color = '#000000'
@@ -107,6 +113,7 @@ def txt():
 
 def paint_line(e):
     global x1, y1
+    settings()
     x2, y2 = e.x, e.y
     w.create_line((x1, y1, x2, y2), width=size, fill=color, tag='im_id')
     draw.line((x1, y1, x2, y2), width=size, fill=rgba)
@@ -119,11 +126,11 @@ def paint_oval(e):
     r = size // 2
     size_figure = x - x1
 
-    if figure == 3:
+    if figure == 4:
         clear()
         w.create_rectangle((x1, y1, x, y), fill=color, outline='', tag='im_id')
         draw.rectangle((x1, y1, x, y), fill=rgba, outline=rgba)
-    elif figure == 4:
+    elif figure == 5:
         clear()
         if x >= x1 and y >= y1:  # условие для draw.ellipse
             w.create_oval((x1, y1, x, y), fill=color, outline='', tag='im_id')
@@ -137,7 +144,7 @@ def paint_oval(e):
         elif x1 >= x and y >= y1:
             w.create_oval((x, y1, x1, y), fill=color, outline='', tag='im_id')
             draw.ellipse((x, y1, x1, y), fill=rgba, outline=rgba)
-    elif figure == 5:
+    elif figure == 6:
         clear()
         y = y1
         x3 = x1+size_figure*math.cos(45)
@@ -189,7 +196,6 @@ def color_all():
 
 def activate_fill():
     global fill_activate, lastik, figure
-    w.unbind('<B1-Motion>')
     if sel is True:
         w.tag_unbind(CURRENT, '<B1-Motion>')
         clear()
@@ -200,12 +206,13 @@ def activate_fill():
     btn_brush.configure(relief=RAISED, state=NORMAL)
     btn_clear.configure(relief=RAISED, state=NORMAL)
     btn_select.configure(relief=RAISED, state=NORMAL)
-    w.bind('<Button-1>', fill_, add='+')
+    w.unbind('<B1-Motion>')
+    w.bind('<Button-1>', fill_)
 
 
 def fill_(e):
     global image_tk, im
-    txt()
+    settings()
     xf, yf = e.x, e.y
     if fill_activate is True:
         ImageDraw.floodfill(imag, xy=(xf, yf), value=rgba)
@@ -230,6 +237,8 @@ def activate_lastik(new_col=lst[-6]):
     lastik = True
     fill_activate = False
     figure = None
+    var.set(2)
+    w.bind('<Button-1>', activate_paint)
     return color_change(new_col)
 
 
@@ -331,7 +340,7 @@ def image_text():
     entry_txt = entry.get()
     top2.destroy()
 
-    txt()
+    settings()
     w_txt, h_txt = draw.textsize(entry_txt, font=font1)
     draw.text(((canvas_width-w_txt)/2, (canvas_height-h_txt)/2),
               entry_txt, fill=rgba, font=font1)
@@ -359,9 +368,9 @@ def select():
 def change_img(e):
     # CURRENT - текущий элемент под мышью
     imag_w, imag_h = imag.size
-    if figure == 3 or figure == 4:
+    if figure == 4 or figure == 5:
         w.coords(CURRENT, (e.x-w_figure, e.y-h_figure, e.x+w_figure, e.y+h_figure))
-    elif figure == 5:
+    elif figure == 6:
         w.coords(CURRENT, (e.x-w_figure, e.y-h_polygon,
                            e.x, e.y+h_polygon,
                            e.x+w_figure, e.y-h_polygon))
@@ -384,19 +393,15 @@ filemenu.add_cascade(label="Файл", menu=submenu)
 filemenu.add_cascade(label="Справка", menu=helpmenu)
 
 menu_right = Menu(tearoff=0)
-menu_right.add_command(label='TEXT', command=entry_text)
 for n in range(len(tx)):
     def figures(f=n):
         global figure
-        if f < len(tx)/2:
-            var.set(f)
-            figure = None
-        else:
-            var.set(3)
-            figure = f
-            activate()
+        var.set(f)
+        figure = f
+        activate()
+    menu_right.add_command(label='TEXT' if n == 0 else tx[n],
+                           command=entry_text if n == 0 else figures)
     menu_right.add_separator() if n == 0 or n == 3 else None
-    menu_right.add_command(label=tx[n], command=figures)
 
 w = Canvas(root, width=canvas_width, height=canvas_height,
            bg='white', cursor='spider', relief=SUNKEN)
@@ -442,10 +447,10 @@ scl.set(size)
 scl.place(x=730, y=252)
 
 var = IntVar()
-var.set(1)
-for j in range(len(tx)//2):
-    Radiobutton(root, text=tx[j], variable=var, fg='navy',
-                value=j).place(x=740+j*25, y=520 if j == 1 else 500)
+var.set(2)
+for j in range(1, len(tx)//2):
+    Radiobutton(root, text=tx[j], variable=var, fg='navy', value=j,
+                command=activate).place(x=740+(j-1)*25, y=520 if j == 2 else 500)
 
 img_btn_brush = PhotoImage(file='img/img0.png')
 btn_brush = Button(root, image=img_btn_brush, command=activate)
