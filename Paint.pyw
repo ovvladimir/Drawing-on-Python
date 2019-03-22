@@ -125,6 +125,9 @@ def paint_oval(e):
     x, y = e.x, e.y
     r = size // 2
     size_figure = x - x1
+    # if 3 < var.get() < 7:
+    if figure is not None:
+        settings()
 
     if figure == 4:
         clear()
@@ -158,8 +161,6 @@ def paint_oval(e):
     w_figure = (x - x1)/2
     h_figure = (y - y1)/2
     h_polygon = (size_figure*math.sqrt(3)/2)/2
-    if 3 < var.get() < 7:
-        settings()
 
 
 def size_change(new_size, pressBtn):
@@ -248,7 +249,9 @@ def clear():
     global imag, draw, im, sel
 
     w.delete("all")
-    text_rgb.delete(1.0, END)
+    # if 4 > var.get() > 6:
+    if figure is None:
+        text_rgb.delete(1.0, END)
 
     imag.close()
     imag = Image.new('RGBA', (canvas_width+20, canvas_height))
@@ -311,6 +314,7 @@ def save_file2():
 
 def about():
     top = Toplevel()
+    top.geometry('+120+120')
     top.title('About')
     top.minsize(width=230, height=100)
     label_about = Label(top, text='Это самое лучшее \nприложение для рисования',
