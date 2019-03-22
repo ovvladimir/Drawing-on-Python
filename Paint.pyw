@@ -50,8 +50,6 @@ def activate_paint(e):
     global x1, y1, figure
     x1, y1 = e.x, e.y
 
-    settings()
-
     if 3 < var.get() < 7:
         w.bind('<B1-Motion>', paint_oval)
     elif var.get() == 7:
@@ -60,6 +58,7 @@ def activate_paint(e):
         w.bind('<Button-1>', paint_line)
     else:
         figure = None
+        settings()
         if var.get() == 1:
             w.bind('<B1-Motion>', paint_oval)
         elif var.get() == 3:
@@ -113,7 +112,8 @@ def settings():
 
 def paint_line(e):
     global x1, y1
-    settings()
+    if var.get() == 7:
+        settings()
     x2, y2 = e.x, e.y
     w.create_line((x1, y1, x2, y2), width=size, fill=color, tag='im_id')
     draw.line((x1, y1, x2, y2), width=size, fill=rgba)
@@ -158,6 +158,8 @@ def paint_oval(e):
     w_figure = (x - x1)/2
     h_figure = (y - y1)/2
     h_polygon = (size_figure*math.sqrt(3)/2)/2
+    if 3 < var.get() < 7:
+        settings()
 
 
 def size_change(new_size, pressBtn):
