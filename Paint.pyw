@@ -16,7 +16,7 @@ lastik = False
 sel = False
 im = None
 figure = None
-font1 = ImageFont.truetype(r'C:\Windows\Fonts\Arial.ttf', 150)
+font1 = ImageFont.truetype(r'C:/Windows/Fonts/Arial.ttf', 150)
 
 lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Желтый', 'Белый',
        'Выбор цвета',
@@ -150,17 +150,17 @@ def paint_oval(e):
     elif figure == 6:
         clear()
         y = y1
-        x3 = x1+size_figure*math.cos(45)
-        y3 = y1+size_figure*math.sin(45)
+        x3 = x1 + size_figure * math.cos(45)
+        y3 = y1 + size_figure * math.sin(45)
         w.create_polygon((x1, y1, x3, y3, x, y), fill=color, outline='', tag='im_id')
         draw.polygon((x1, y1, x3, y3, x, y), fill=rgba, outline=rgba)
     else:
-        w.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='', tag='im_id')
-        draw.ellipse((x-r, y-r, x+r, y+r), fill=rgba, outline=rgba)
+        w.create_oval(x - r, y - r, x + r, y + r, fill=color, outline='', tag='im_id')
+        draw.ellipse((x - r, y - r, x + r, y + r), fill=rgba, outline=rgba)
 
-    w_figure = (x - x1)/2
-    h_figure = (y - y1)/2
-    h_polygon = (size_figure*math.sqrt(3)/2)/2
+    w_figure = (x - x1) / 2.0
+    h_figure = (y - y1) / 2.0
+    h_polygon = (size_figure * math.sqrt(3) / 2.0) / 2.0
 
 
 def size_change(new_size, pressBtn):
@@ -193,7 +193,7 @@ def color_all():
     if new_col is None:  # нажата кнопка "Отмена"
         rgb = rgb_old
         new_col = color_old
-    lst[len(lst)//2] = new_col
+    lst[len(lst) // 2] = new_col
     return color_change(new_col)
 
 
@@ -254,7 +254,7 @@ def clear():
         text_rgb.delete(1.0, END)
 
     imag.close()
-    imag = Image.new('RGBA', (canvas_width+20, canvas_height))
+    imag = Image.new('RGBA', (canvas_width + 20, canvas_height))
     draw = ImageDraw.Draw(imag)
 
     im = None
@@ -329,10 +329,11 @@ def mouse_right(e):
 def entry_text():
     global entry, top2
     top2 = Toplevel()
+    top2.geometry('+120+120')
     top2.minsize(width=150, height=100)
     lb_txt = Label(top2, text='Введите текст')
     lb_txt.pack()
-    entry = Entry(top2)
+    entry = Entry(top2, relief=SUNKEN, bd=10)
     entry.focus()
     entry.pack(pady=5)
     Button(top2, text='Напечатать?', bd=15, command=image_text).pack()
@@ -348,7 +349,7 @@ def image_text():
 
     settings()
     w_txt, h_txt = draw.textsize(entry_txt, font=font1)
-    draw.text(((canvas_width-w_txt)/2, (canvas_height-h_txt)/2),
+    draw.text(((canvas_width - w_txt) / 2.0, (canvas_height - h_txt) / 2.0),
               entry_txt, fill=rgba, font=font1)
     image_txt = ImageTk.PhotoImage(image=imag)
     im = w.create_image(0, 0, anchor=NW, image=image_txt, tag='txt_id')
@@ -375,13 +376,13 @@ def change_img(e):
     # CURRENT - текущий элемент под мышью
     imag_w, imag_h = imag.size
     if figure == 4 or figure == 5:
-        w.coords(CURRENT, (e.x-w_figure, e.y-h_figure, e.x+w_figure, e.y+h_figure))
+        w.coords(CURRENT, (e.x - w_figure, e.y - h_figure, e.x + w_figure, e.y + h_figure))
     elif figure == 6:
-        w.coords(CURRENT, (e.x-w_figure, e.y-h_polygon,
-                           e.x, e.y+h_polygon,
-                           e.x+w_figure, e.y-h_polygon))
+        w.coords(CURRENT, (e.x - w_figure, e.y - h_polygon,
+                           e.x, e.y + h_polygon,
+                           e.x + w_figure, e.y - h_polygon))
     else:
-        w.coords(im, (e.x-imag_w/2, e.y-imag_h/2))
+        w.coords(im, (e.x - imag_w / 2.0, e.y - imag_h / 2.0))
 
 
 filemenu = Menu(root)
@@ -413,21 +414,22 @@ w = Canvas(root, width=canvas_width, height=canvas_height,
            bg='white', cursor='spider', relief=SUNKEN)
 w.grid(row=2, column=0, columnspan=6, padx=3, pady=3, sticky=E + W + S + N)
 
-imag = Image.new('RGBA', (canvas_width+20, canvas_height))
+imag = Image.new('RGBA', (canvas_width + 20, canvas_height))
 draw = ImageDraw.Draw(imag)
 
 list_btnSize = []
-for i in range(len(lst)//2):
-    def com(new_col=lst[-1-i]): return color_change(new_col)
-    Button(text=lst[i], width=16, fg=lst[-1-i], bg='light grey',
+for i in range(len(lst) // 2):
+    def com(new_col=lst[-1 - i]):
+        return color_change(new_col)
+    Button(text=lst[i], width=16, fg=lst[-1 - i], bg='light grey',
            font='arial 9',
-           command=com if i < len(lst)/2-1 else color_all).grid(row=0,
-                                                                column=i)
+           command=com if i < len(lst) / 2.0 - 1 else color_all).grid(row=0, column=i)
 
-    def comm(neu_sz=1+i*2, press=i): return size_change(neu_sz, press)
-    btn = Button(text=1+i*2 if i < len(lst)/2-1 else 'Очистить',
+    def comm(neu_sz=1 + i * 2, press=i):
+        return size_change(neu_sz, press)
+    btn = Button(text=1 + i * 2 if i < len(lst) / 2.0 - 1 else 'Очистить',
                  width=16, bg='light grey', fg='navy', font='arial 9',
-                 command=comm if i < len(lst)/2-1 else clear)
+                 command=comm if i < len(lst) / 2.0 - 1 else clear)
     btn.configure(relief=RAISED, state=NORMAL)
     btn.grid(row=1, column=i)
     list_btnSize.append(btn)
@@ -454,9 +456,9 @@ scl.place(x=730, y=252)
 
 var = IntVar()
 var.set(2)
-for j in range(1, len(tx)//2):
+for j in range(1, len(tx) // 2):
     Radiobutton(root, text=tx[j], variable=var, fg='navy', value=j,
-                command=activate).place(x=740+(j-1)*25, y=520 if j == 2 else 500)
+                command=activate).place(x=740 + (j - 1) * 25, y=520 if j == 2 else 500)
 
 img_btn_brush = PhotoImage(file='img/img0.png')
 btn_brush = Button(root, image=img_btn_brush, command=activate)
