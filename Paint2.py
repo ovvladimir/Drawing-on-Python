@@ -7,7 +7,7 @@ from tkinter import filedialog as fd
 from PIL import Image, ImageDraw, ImageTk
 try:
     from PIL import ImageGrab
-except:
+except BaseException:
     import pyscreenshot as ImageGrab  # For Linux
 
 color = '#000000'
@@ -86,8 +86,8 @@ def paint_line(event):
 def paint_oval(event):
     x, y = event.x, event.y
     r = size // 2
-    canvas.create_oval(x-r, y-r, x+r, y+r, fill=color, outline='')
-    draw.ellipse((x-r, y-r, x+r, y+r), fill=color, outline=color)
+    canvas.create_oval(x - r, y - r, x + r, y + r, fill=color, outline='')
+    draw.ellipse((x - r, y - r, x + r, y + r), fill=color, outline=color)
 
 
 def clean(event):
@@ -267,16 +267,16 @@ def mouse_right(event):
 
 
 def text():
-    canvas.create_text(WIDTH/2, HEIGHT/2, justify=CENTER, text='PAINT',
+    canvas.create_text(WIDTH / 2.0, HEIGHT / 2.0, justify=CENTER, text='PAINT',
                        font='times 50 bold', fill=color)
 
 
 def set_size(d):
     d = sc.get() // 4
-    w = can.winfo_width() / 2
-    h = can.winfo_height() / 2
+    w = can.winfo_width() / 2.0
+    h = can.winfo_height() / 2.0
     can.delete('id')
-    can.create_oval(w-d, h-d, w+d, h+d,
+    can.create_oval(w - d, h - d, w + d, h + d,
                     fill='white', outline=color, tag='id', width=5)
 
 
@@ -353,15 +353,15 @@ btn_7.bind("<Button-1>", lastik)
 var = IntVar()
 var.set(5)
 for i in range(6):
-    Radiobutton(root, text='scroll' if i == 5 else (i+1)*10, variable=var,
-                value=i).place(x=310+i*40, y=5)
+    Radiobutton(root, text='scroll' if i == 5 else (i + 1) * 10, variable=var,
+                value=i).place(x=310 + i * 40, y=5)
 
 var2 = IntVar()
 var2.set(0)
 tx = ['mix', 'oval', 'line']
 for j in range(len(tx)):
     Radiobutton(root, text=tx[j], variable=var2,
-                value=j).place(x=10, y=515+j*20)
+                value=j).place(x=10, y=515 + j * 20)
 
 sc = Scale(root, orient=HORIZONTAL, length=234, from_=0, to=100,
            tickinterval=10, resolution=1, relief=SUNKEN, command=set_size)
