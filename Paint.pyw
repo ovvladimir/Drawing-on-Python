@@ -16,10 +16,9 @@ lastik = False
 sel = False
 im = None
 figure = None
-font1 = ImageFont.truetype(r'C:/Windows/Fonts/Arial.ttf', 150)
+font1 = ImageFont.truetype('C:/Windows/Fonts/Arial.ttf', 150)
 
-lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Желтый', 'Белый',
-       'Выбор цвета',
+lst = ['Черный', 'Красный', 'Зеленый', 'Голубой', 'Желтый', 'Белый', 'Выбор цвета',
        color,
        'white', 'yellow', 'blue', 'green', 'red', 'black']
 tx = ['TEXT', 'oval', 'mix', 'line', 'Квадрат', 'Эллипс', 'Треугольник', 'Линия']
@@ -28,6 +27,10 @@ root = Tk()
 root.geometry('+1+1')
 root.iconphoto(True, PhotoImage(file='img/ico.png'))
 root.title('Paint Python')
+'''
+root.overrideredirect(True)
+root.attributes("-alpha", 0.75)
+'''
 
 
 def activate():
@@ -386,7 +389,7 @@ def change_img(e):
 
 
 filemenu = Menu(root)
-root.config(menu=filemenu)
+root.config(menu=filemenu, bd=2, bg='light grey', relief='raised')
 submenu = Menu(filemenu, tearoff=0)
 helpmenu = Menu(filemenu, tearoff=0)
 submenu.add_command(label="Новый", command=new_file)
